@@ -7,6 +7,8 @@ import Data.Maybe
 -- For splitting the list into chunks for printing
 import Data.List.Split
 
+import System.Random.Shuffle
+
 -- The board is a list of Ints, from 1-16 (16 being the empty space)
 type Board = [Int]
 
@@ -20,8 +22,9 @@ main = do
   putStrLn "Your goal is to get the tiles 1 through 15 into ascending order, and the empty space in the bottom right corner.\n"
   putStrLn "You can do that by moving one tile at a time into the empty space. To move a tile into the space, enter the number on the tile.\n"
   putStrLn "Ready?\n"
-  displayBoard initialBoard
-  play initialBoard
+  board <- randomBoard
+  displayBoard board
+  play board
 
 -- On each turn,
 --   check if the game is over,
@@ -112,3 +115,42 @@ boardStr board =
     -- Generate row separators ("---+----+----+---")
     rowSep        = "\n+----+----+----+----+\n"
     rows = map (\x -> "| " ++ rowStr x ++ " |") drawableBoard
+
+
+-- Generates a random, solvable board
+randomBoard :: IO Board
+randomBoard = do
+  board <- shuffleM [1..16]
+  if solvable board
+    then
+      return board
+    else
+      randomBoard
+
+-- A board is solvable if the empty space is in an odd row
+-- and the number of inversions is even, or the empty space
+-- is in an even row and the number of inversions is odd
+solvable :: Board -> Bool
+solvable board =
+  let indexOfEmpty = fromJust $ elemIndex 16 board
+      rowOfEmpty = indexOfEmpty `div` 4
+  in (rowOfEmpty `mod` 2) /= ((numInversions board) `mod` 2)
+
+-- Counts the number of inversions in a list
+numInversions :: [Int] -> Int
+numInversions [x] = 0
+numInversions (h:t) =
+  let sum = numInversionsHelper h t
+  in sum + numInversions t
+
+-- Counts the number of elements in a list that are greater than a given value
+numInversionsHelper :: Int -> [Int] -> Int
+numInversionsHelper _ [] = 0
+numInversionsHelper x (h:t)
+  | x > h = 1 + numInversionsHelper x t
+  | x <= h = numInversionsHelper x t
+
+-- Swaps two elements in a unique list by index
+swapByIndex :: Int -> Int -> Board -> Board
+swapByIndex i j list =
+  swap (list!!i) (list!!j) list
