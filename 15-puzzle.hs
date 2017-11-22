@@ -36,7 +36,7 @@ play board = do
     return ()
   else do
     putStrLn "Enter a tile to move: "
-    move <- getLine 
+    move <- getLine
     if not (isValidMove (read move :: Int) board) then do
       putStrLn "\nInvalid move, please enter a valid move\n"
       play board
