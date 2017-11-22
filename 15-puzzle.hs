@@ -4,6 +4,8 @@ import Data.Matrix
 import Data.List
 -- For elemIndex
 import Data.Maybe
+-- For splitting the list into chunks for printing
+import Data.List.Split
 
 -- The board is a list of Ints, from 1-16 (16 being the empty space)
 type Board = [Int]
@@ -15,9 +17,9 @@ initialBoard = [12, 14, 1, 2, 5, 6, 3, 10, 9, 13, 8, 11, 4, 7, 15, 16]
 --   play from the initial board
 main = do
   putStrLn "\nWelcome to 15 Puzzle!\n"
-  putStrLn "\nYour goal is to get the tiles 1 through 15 into ascending order, and the empty space in the bottom right corner.\n"
-  putStrLn "\nYou can do that by moving one tile at a time into the empty space. To move a tile into the space, enter the number on the tile.\n"
-  putStrLn "\nReady?\n"
+  putStrLn "Your goal is to get the tiles 1 through 15 into ascending order, and the empty space in the bottom right corner.\n"
+  putStrLn "You can do that by moving one tile at a time into the empty space. To move a tile into the space, enter the number on the tile.\n"
+  putStrLn "Ready?\n"
   displayBoard initialBoard
   play initialBoard
 
@@ -33,7 +35,8 @@ play board = do
     putStrLn "\nCongratulations, you won!\n"
     return ()
   else do
-    move <- getLine
+    putStrLn "Enter a tile to move: "
+    move <- getLine 
     if not (isValidMove (read move :: Int) board) then do
       putStrLn "\nInvalid move, please enter a valid move\n"
       play board
@@ -92,8 +95,20 @@ sorted [] = True
 sorted [x] = True
 sorted (x:y:xs) = x <= y && sorted (y:xs)
 
--- Pretty-prints the board
+-- Pretty-prints the game board
 displayBoard board =
-  let boardWithChars = map (\x -> show x) board
-      boardWithEmpty = map (\x -> if x == "16" then " " else x) boardWithChars
-  in putStrLn $ show (fromList 4 4 boardWithEmpty)
+  putStrLn (boardStr board)
+
+boardStr :: Board -> String
+boardStr board =
+  -- Put it together
+  "+----+----+----+----+\n" ++ (intercalate rowSep $ rows) ++ "\n+----+----+----+----+"
+  where
+    boardWithChars = map (\x -> show x) board
+    boardWithEmpty = map (\x -> if x == "16" then " " else x) boardWithChars
+    drawableBoard = chunksOf 4 boardWithEmpty
+    -- Place vertical bars between the tiles
+    rowStr        = intercalate " | " . map (\x -> if (length x) == 1 then " " ++ x else x)
+    -- Generate row separators ("---+----+----+---")
+    rowSep        = "\n+----+----+----+----+\n"
+    rows = map (\x -> "| " ++ rowStr x ++ " |") drawableBoard
