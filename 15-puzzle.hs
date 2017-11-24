@@ -9,6 +9,8 @@ import Data.List.Split
 
 import System.Random.Shuffle
 
+import Text.Read
+
 -- The board is a list of Ints, from 1-16 (16 being the empty space)
 type Board = [Int]
 
@@ -38,29 +40,39 @@ play board = do
     putStrLn "\nCongratulations, you won!\n"
     return ()
   else do
-    putStrLn "Enter a tile to move: "
-    move <- getLine
-    if not (isValidMove (read move :: Int) board) then do
+    move <- getLineInt
+    if not (isValidMove move board) then do
       putStrLn "\nInvalid move, please enter a valid move\n"
       play board
     else do
-    let newBoard = updateBoard (read move :: Int) board
-    displayBoard newBoard
-    play newBoard
+      let newBoard = updateBoard move board
+      displayBoard newBoard
+      play newBoard
+
+getLineInt :: IO Int
+getLineInt = do
+  putStrLn "Enter a tile to move: "
+  line <- getLine
+  case readMaybe line :: Maybe Int of
+    Just x -> return x
+    Nothing -> putStrLn "\nInvalid move, please enter a valid move\n" >> getLineInt
 
 -- Return True if the move is valid, that is,
 --   if the specified tile is next to the empty tile
 isValidMove :: Int -> Board -> Bool
 isValidMove move board =
   -- get the matrix representation of the board
-  let boardAsMatrix = fromList 4 4 board
-      indexOfMove = fromJust $ elemIndex move board
-      rowOfMove = indexOfMove `div` 4
-      columnOfMove = indexOfMove `mod` 4
-      indexOfEmpty = fromJust $ elemIndex 16 board
-      rowOfEmpty = indexOfEmpty `div` 4
-      columnOfEmpty = indexOfEmpty `mod` 4
-  in isValidMoveHelper rowOfMove columnOfMove rowOfEmpty columnOfEmpty
+  if move > 15 then
+    False
+  else
+    let boardAsMatrix = fromList 4 4 board
+        indexOfMove = fromJust $ elemIndex move board
+        rowOfMove = indexOfMove `div` 4
+        columnOfMove = indexOfMove `mod` 4
+        indexOfEmpty = fromJust $ elemIndex 16 board
+        rowOfEmpty = indexOfEmpty `div` 4
+        columnOfEmpty = indexOfEmpty `mod` 4
+    in isValidMoveHelper rowOfMove columnOfMove rowOfEmpty columnOfEmpty
 
 -- Return True if (x, y) is row or column adjacent to (i, j)
 isValidMoveHelper :: Int -> Int -> Int -> Int -> Bool
